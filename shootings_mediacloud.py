@@ -16,7 +16,7 @@ base_url = 'https://search.mediacloud.org/api/'  # this might be different for t
 def fetch_stories(api, keywords, collection_id):
     all_stories = []
     page = 0
-    page_size = 100  # number of stories to fetch per request, adjust based on the API's limits
+    page_size = 10  # number of stories to fetch per request
 
     while True:
         # Construct the URL for searching stories. This may vary depending on the actual API's structure.
