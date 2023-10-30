@@ -55,7 +55,6 @@ credentials = Credentials.from_service_account_file(
 
 service_sheets = build('sheets', 'v4', credentials=credentials)
 
-# The ID of your spreadsheet and the range where you want to insert data
 SPREADSHEET_ID = '1qWjTUjCMFU_K31xGZqPwNMZQg_HVRsmQq15_2pvvjMA'  # Get this from the URL of your Google Sheets document
 sheet_range = 'Sheet1!A1'  # This points to the top-left cell of your Sheet, adjust as needed
 
