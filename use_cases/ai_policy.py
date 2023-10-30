@@ -1,4 +1,4 @@
-from data_retrieval.fetch_article import ArticleFetcher
+from data_retrieval.web_search import ArticleFetcher
 from data_storage.google_sheets import GoogleSheetsStorage
 
 class AIPoliciesSearch:
