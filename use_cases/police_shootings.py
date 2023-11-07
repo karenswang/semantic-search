@@ -8,7 +8,7 @@ class PoliceShootingsPoliciesSearch:
         self.spreadsheet_id = spreadsheet_id
 
     def execute(self):
-        query = "\"police shootings\" OR (\"police killed\" AND gun)"
+        query = '"police shooting" OR "shot by police" OR "police shot" OR "officer-involved shooting" OR "police-involved shooting" OR "police officer shooting" OR "police officer shot"'
         articles = self.article_fetcher.fetch_articles(query)
 
         if articles:
