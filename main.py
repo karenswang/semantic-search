@@ -8,7 +8,7 @@ load_dotenv()
 
 def main():
     # Path to service account key file (from Google Cloud Console)
-    SERVICE_ACCOUNT_FILE = './data_storage/semantic-search-1697418273136-1630a5c96bc7.json'
+    SERVICE_ACCOUNT_FILE = './data_storage/semantic-search-1697418273136-1630a5c96bc7.json' # see google_service account in repo secret
     
     # SPREADSHEET_ID = '1qWjTUjCMFU_K31xGZqPwNMZQg_HVRsmQq15_2pvvjMA'  # AI policy
     SPREADSHEET_ID = '1I4nbVVCLLNJXTOqElUOpAlJs1zkNTkZ0A9mtknF6YoA' # mass shootings
