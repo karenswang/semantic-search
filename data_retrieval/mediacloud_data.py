@@ -37,11 +37,20 @@ while more_pages:
 
 # Cleaning up domains
 cleaned_domains = [
-    domain.replace('https://www.', '').replace('http://www.', '').replace('https://','').replace('http://','').rstrip('/')
+    domain.replace('https://www.', '')
+          .replace('http://www.', '')
+          .replace('https://', '')
+          .replace('http://', '')
+          .replace('#spider', '')
+          .replace('/#spider', '')
+          .rstrip('/')
     for domain in all_domains
     if domain  # Ensure the domain is not None or empty
 ]
 print(f"Number of sources: {len(cleaned_domains)}")
+domains_df = pd.DataFrame(cleaned_domains, columns=['Domain'])
+# Save the DataFrame to a CSV file
+domains_df.to_csv('domains.csv', index=False)
 
 domain_chunks = list(split_into_chunks(cleaned_domains, 1000))
 
@@ -60,7 +69,9 @@ requests_cache.install_cache('article_cache', backend='filesystem', expire_after
 
 # Query parameters
 # query_term = '("police shooting" OR "shot by police" OR "police shot" OR "officer-involved shooting" OR "police-involved shooting" OR "police officer shooting" OR "police shot" OR "officer shot")'
-query_term = '("police shooting" OR "shot by police" OR "police shot" OR "officer-involved shooting" OR "police-involved shooting" OR "police officer shooting" OR "officer shot" OR "deputy shot" OR "sheriff shot" OR "cop shot" OR "trooper shot" OR "shot by officer" OR "shot by deputy" OR "shot by sheriff" OR "shot by cop" OR "shot by trooper" OR "shot by police officer")'
+query_term = '("police shooting" OR "shot by police" OR "police shot" OR "officer-involved shooting" OR "police-involved shooting" OR "police officer shooting" OR "officer shot" OR "deputy shot" OR "sheriff shot" OR "cop shot" OR "trooper shot" OR "shot by officer" OR "shot by deputy" OR "shot by sheriff" OR "shot by cop" OR "shot by trooper" OR \
+    "killed by police" OR "killed by officer" OR "killed by deputy" OR "killed by sheriff" OR "killed by cop" OR "killed by trooper")'
+
 # query_term = 'police AND shot'
 start = datetime(2023, 9, 1) #11/6 - 11/15
 end = datetime(2023, 10, 1) 
