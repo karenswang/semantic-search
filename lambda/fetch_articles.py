@@ -10,30 +10,32 @@ from newspaper import Article
 # import unicodedata
 import concurrent.futures
 from utils.utils import split_into_chunks, fetch_snippet, sanitize_snippet, get_snippet_from_wayback_machine
+from sentence_transformers import SentenceTransformer
 
-# get news domains
+import weaviate
+import json
+import os
+
+
 collection_id = "38379429"
-directory_api = mediacloud.api.DirectoryApi(auth_token='e85cce24da8b73eaa05329d258146c044ef055db')
 api = SearchApiClient("mediacloud")
 
-all_domains = []
-# Pagination setup
-offset = 0
-limit = 100  # seems to have a 100 limit
-more_pages = True
-
-while more_pages:
-    # Fetch sources with current offset
-    sources_response = directory_api.source_list(collection_id=collection_id, limit=limit, offset=offset)
-    sources = sources_response.get('results', [])
-    domains = [source['homepage'] for source in sources]
-    all_domains.extend(domains)
-    
-    # Update the offset
-    offset += limit
-    
-    # Check if there are more pages to fetch
-    more_pages = len(sources) == limit
+SOURCES_PER_PAGE = 100  # the number of sources retrieved per page
+mc_directory = mediacloud.api.DirectoryApi('e85cce24da8b73eaa05329d258146c044ef055db')
+sources = []
+offset = 0   # offset for paging through
+while True:
+    # grab a page of sources in the collection
+    response = mc_directory.source_list(collection_id=collection_id, limit=SOURCES_PER_PAGE, offset=offset)
+    # add it to our running list of all the sources in the collection
+    sources += response['results']
+    # if there is no next page then we're done so bail out
+    if response['next'] is None:
+        break
+    # otherwise setup to fetch the next page of sources
+    offset += len(response['results'])
+print("Collection has {} sources".format(len(sources)))
+all_domains = [s['name'] for s in sources]
 
 # Cleaning up domains
 cleaned_domains = [
@@ -50,18 +52,9 @@ cleaned_domains = [
 print(f"Number of sources: {len(cleaned_domains)}")
 domains_df = pd.DataFrame(cleaned_domains, columns=['Domain'])
 # Save the DataFrame to a CSV file
-domains_df.to_csv('domains.csv', index=False)
+# domains_df.to_csv('domains.csv', index=False)
 
 domain_chunks = list(split_into_chunks(cleaned_domains, 1000))
-
-# sources_response = directory_api.source_list(collection_id=collection_id)
-# domains = [source['homepage'] for source in sources_response['results']]
-# num_sources = len(sources_response['results'])
-# print(f"Number of sources: {num_sources}")
-
-# cleaned_domains = [domain.replace('https://www.', '').replace('http://www.', '').replace('https://','').replace('http://','') for domain in domains]
-# cleaned_domains = [url.rstrip('/') for url in cleaned_domains]
-# print(cleaned_domains)
 
 # Enable requests cache
 requests_cache.install_cache('article_cache', backend='filesystem', expire_after=3600)
@@ -73,8 +66,8 @@ query_term = '("police shooting" OR "shot by police" OR "police shot" OR "office
     "killed by police" OR "killed by officer" OR "killed by deputy" OR "killed by sheriff" OR "killed by cop" OR "killed by trooper")'
 
 # query_term = 'police AND shot'
-start = datetime(2023, 9, 1) #11/6 - 11/15
-end = datetime(2023, 10, 1) 
+start = datetime(2023, 7, 1) #11/6 - 11/15
+end = datetime(2023, 7, 15) 
 language = "en"
 
 # DataFrame to store combined results
@@ -95,7 +88,6 @@ for chunk in domain_chunks:
         chunk_results = pd.DataFrame(articles)
         results_list.append(chunk_results)
     
-
 # Concatenate all DataFrames in the list
 combined_results = pd.concat(results_list, ignore_index=True)
 # results = pd.DataFrame(articles).sort_values(by='publication_date', ascending=False)
@@ -103,8 +95,8 @@ combined_results.sort_values(by='publication_date', ascending=False, inplace=Tru
 print(combined_results.shape)
 combined_results.drop_duplicates(subset=['title'], keep='first', inplace=True)
 print("after dropping duplicates: ", combined_results.shape)
-combined_results.to_csv(f'./data_storage/{start}_no_snippet.csv', index=False)
-
+timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+combined_results.to_csv(f'../data_storage/{timestamp}_no_snippet.csv', index=False)
 
 for index, article in tqdm(combined_results.iterrows(), total=combined_results.shape[0]):
     # only use wayback machine
@@ -114,18 +106,25 @@ for index, article in tqdm(combined_results.iterrows(), total=combined_results.s
         sanitized_snippet = sanitize_snippet(snippet)
         combined_results.loc[index, 'snippet'] = sanitized_snippet
         
-    # or concurrently run mediacloud wayback machine and newspaper3k
-    # article_url = article['url']
-    # wayback_url = article['article_url']
-    # snippet, method_used = fetch_snippet(article_url, wayback_url)
-    # if snippet:
-    #     sanitized_snippet = sanitize_snippet(snippet)
-    #     combined_results.loc[index, 'snippet'] = sanitized_snippet
-    #     # print(f"Snippet fetched using {method_used} method for URL: {article_url}")
+        
+        
+        
+# # batch process
+# batch_size = 100  
+# num_batches = len(combined_results) // batch_size + (len(combined_results) % batch_size > 0)
 
-print(combined_results.shape)
+# for batch_num in range(num_batches):
+#     start_idx = batch_num * batch_size
+#     end_idx = start_idx + batch_size
+#     batch = combined_results.iloc[start_idx:end_idx]
+#     # Save each batch to S3 or send to Lambda directly
+
+        
+
+# print(combined_results.shape)
 combined_results.dropna(subset=['snippet'], inplace=True)
 print("after dropping null snippets: ", combined_results.shape)
-combined_results.to_csv(f'./data_storage/{start}.csv', index=False)
-print(f"Data retrieval complete. Results saved to './data_storage/{start}.csv'.")
+combined_results.reset_index(drop=True, inplace=True)
+combined_results.to_csv(f'../data_storage/{timestamp}.csv', index=False)
+print(f"Data retrieval complete. Results saved to '../data_storage/{timestamp}.csv'.")
 
