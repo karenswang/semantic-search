@@ -22,6 +22,7 @@ timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 weaviate_api_key = os.getenv('WEAVIATE_API_KEY')
 weaviate_url = os.getenv('WEAVIATE_URL')
 openai_key = os.getenv('OPENAI_API_KEY')
+billtrack50_api_key = os.getenv('bill_tracker_api_key')
 
 client = weaviate.Client(
     url = weaviate_url,
@@ -32,42 +33,42 @@ client = weaviate.Client(
 )
 
 
-# # Configuration for API requests
-# api_url = "https://www.billtrack50.com/bt50api/2.1/json/bills"
-# params = {
-#     "searchText": "gender",
-#     "stateCodes": "NY,CA,TX,FL"
-# }
-# headers = {
-#     "Authorization": "apiKey f90e55de-507e-48bf-b709-23e820a637d4"
-# }
+# Configuration for API requests
+api_url = "https://www.billtrack50.com/bt50api/2.1/json/bills"
+params = {
+    "searchText": "gender",
+    "stateCodes": "NY,CA,TX,FL"
+}
+headers = {
+    "Authorization": f"apiKey {billtrack50_api_key}"
+}
 
-# # Initialize DataFrame to store combined data
-# combined_results = pd.DataFrame()
+# Initialize DataFrame to store combined data
+combined_results = pd.DataFrame()
 
-# # Implement pagination
-# current_page = 1
-# total_pages = None  # We'll update this based on the API responses
+# Implement pagination
+current_page = 1
+total_pages = None  # We'll update this based on the API responses
 
-# while total_pages is None or current_page <= total_pages:
-#     print(f"Fetching data for page {current_page}...")
-#     response = requests.get(api_url, headers=headers, params={**params, "page": current_page})
-#     if response.status_code == 200:
-#         data = response.json()
-#         if total_pages is None:
-#             # Assuming the API provides total pages directly
-#             total_pages = data.get('totalPages', 1)
-#         bills = data['bills']
-#         combined_results = pd.concat([combined_results, pd.DataFrame(bills)], ignore_index=True)
-#         current_page += 1
-#     else:
-#         print(f"Failed to fetch data for page {current_page}. Status Code: {response.status_code}")
-#         break
+while total_pages is None or current_page <= total_pages:
+    print(f"Fetching data for page {current_page}...")
+    response = requests.get(api_url, headers=headers, params={**params, "page": current_page})
+    if response.status_code == 200:
+        data = response.json()
+        if total_pages is None:
+            # Assuming the API provides total pages directly
+            total_pages = data.get('totalPages', 1)
+        bills = data['bills']
+        combined_results = pd.concat([combined_results, pd.DataFrame(bills)], ignore_index=True)
+        current_page += 1
+    else:
+        print(f"Failed to fetch data for page {current_page}. Status Code: {response.status_code}")
+        break
 
-# print("Shape of result dataframe:", combined_results.shape)
-# print(combined_results.head())
-# combined_results.to_csv(f'./data_storage/legislation/{timestamp}_billtrack50_results.csv', index=False)
-combined_results = pd.read_csv('./data_storage/legislation/billtrack50_results.csv')
+print("Shape of result dataframe:", combined_results.shape)
+print(combined_results.head())
+combined_results.to_csv(f'./data_storage/legislation/billtrack50_results.csv', index=False)
+# combined_results = pd.read_csv('./data_storage/legislation/billtrack50_results.csv')
 
 # pre-vectorize the snippet to avoid using huggingface API which costs money
 model = SentenceTransformer('sentence-transformers/msmarco-MiniLM-L12-cos-v5')
