@@ -1,15 +1,10 @@
 from datetime import datetime
 import pandas as pd
 import requests
-from retrying import retry
-import requests_cache
 from tqdm import tqdm
-# import mediacloud.api
-from newspaper import Article
 # import unicodedata
 from sentence_transformers import SentenceTransformer
 from InstructorEmbedding import INSTRUCTOR
-
 
 import weaviate
 import json
@@ -166,9 +161,22 @@ get_legislation_group = f"""
       }},
       limit: 80
     ) {{
-      billName,
-      summary,
-      keyWords
+      billID,
+        stateBillID,
+        stateCode,
+        billName,
+        summary,
+        sponsorCount,
+        sponsors,
+        subjects,
+        keyWords,
+        actions,
+        lastAction,
+        actionDate,
+        votes,
+        billProgress,
+        officialDocument,
+        created,
     }}
   }}
 }}

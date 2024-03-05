@@ -8,3 +8,4 @@ article_cache
 *.csv
 *.xlsx
 legacy_mediacloud.ipynb
+*.mov
