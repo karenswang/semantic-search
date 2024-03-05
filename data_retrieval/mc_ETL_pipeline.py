@@ -23,12 +23,15 @@ from dotenv import load_dotenv
 load_dotenv()
 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-OPENAI_APIKEY = os.getenv('OPENAI_API_KEY')
+weaviate_api_key = os.getenv('WEAVIATE_API_KEY')
+weaviate_url = os.getenv('WEAVIATE_URL')
+openai_key = os.getenv('OPENAI_API_KEY')
+
 client = weaviate.Client(
-    url = "https://semantic-search-24c7be3q.weaviate.network",
-    auth_client_secret=weaviate.AuthApiKey(api_key="q2qbDfx6ZL90ltqE8T5IoX3IQfdfvyI47aQg"), 
+    url = weaviate_url,
+    auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key), 
     additional_headers = {
-        "X-OpenAI-Api-Key": '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'
+        "X-OpenAI-Api-Key": openai_key
     }
 )
 
