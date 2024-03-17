@@ -28,11 +28,12 @@ client = weaviate.Client(
 )
 
 
+state = "NY"
 # Configuration for API requests
 api_url = "https://www.billtrack50.com/bt50api/2.1/json/bills"
 params = {
     "searchText": "gender",
-    "stateCodes": "NY,CA,TX,FL"
+    "stateCodes": state
 }
 headers = {
     "Authorization": f"apiKey {billtrack50_api_key}"
@@ -62,7 +63,7 @@ while total_pages is None or current_page <= total_pages:
 
 print("Shape of result dataframe:", combined_results.shape)
 print(combined_results.head())
-combined_results.to_csv(f'./data_storage/legislation/billtrack50_results.csv', index=False)
+combined_results.to_csv(f'./data_storage/legislation/{state}_billtrack50_results.csv', index=False)
 # combined_results = pd.read_csv('./data_storage/legislation/billtrack50_results.csv')
 
 # pre-vectorize the snippet to avoid using huggingface API which costs money
@@ -137,7 +138,7 @@ with client.batch as batch:
 
 
 query_text = """
-Find bills relating to gender identity, LGBTQ+ groups, trans, nonbinary, gender-nonconforming, genderqueer, genderfluid. Also include bills that could potentially impact these groups.
+Find bills relating to gender identity, LGBTQ+ groups, trans, nonbinary, gender-nonconforming, genderqueer, genderfluid. Also include bills that could have a bigger impact on these groups than others.
 """
 instruction_prompt = "Represent the news articles for retrieval:"
 
@@ -187,4 +188,4 @@ query_result = client.query.raw(get_legislation_group)
 print(query_result)
 # save to csv
 df = pd.DataFrame(query_result['data']['Get']['Legislation'])
-df.to_csv(f'./data_storage/{timestamp}_test_weaviate_result.csv', index=False)
+df.to_csv(f'./data_storage/{state}_test_weaviate_result.csv', index=False)

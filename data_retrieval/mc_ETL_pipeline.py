@@ -82,11 +82,11 @@ requests_cache.install_cache('article_cache', backend='filesystem', expire_after
 
 # Query parameters
 query_term = '("police shooting" OR "shot by police" OR "police shot" OR "officer-involved shooting" OR "police-involved shooting" OR "police officer shooting" OR "officer shot" OR "deputy shot" OR "sheriff shot" OR "cop shot" OR "trooper shot" OR "shot by officer" OR "shot by deputy" OR "shot by sheriff" OR "shot by cop" OR "shot by trooper" OR \
-    # "killed by police" OR "killed by officer" OR "killed by deputy" OR "killed by sheriff" OR "killed by cop" OR "killed by trooper")'
+    "killed by police" OR "killed by officer" OR "killed by deputy" OR "killed by sheriff" OR "killed by cop" OR "killed by trooper")'
 
-# query_term = '("gender" AND "hate crime")'
-start = datetime(2023, 12, 1) 
-end = datetime(2023, 12, 15) 
+# query_term = '"hate crime"'
+start = datetime(2023, 12, 15) 
+end = datetime(2023, 12, 30) 
 language = "en"
 
 # DataFrame to store combined results
@@ -115,7 +115,7 @@ print(combined_results.shape)
 combined_results.drop_duplicates(subset=['title'], keep='first', inplace=True)
 print("after dropping duplicates: ", combined_results.shape)
 
-combined_results.to_csv(f'./data_storage/{timestamp}_no_snippet.csv', index=False)
+# combined_results.to_csv(f'./data_storage/{timestamp}_no_snippet.csv', index=False)
 
 for index, article in tqdm(combined_results.iterrows(), total=combined_results.shape[0]):
     # only use wayback machine
@@ -137,8 +137,8 @@ print(f"Data retrieval complete. Results saved to './data_storage/{start}.csv'."
 
 # pre-vectorize the snippet to avoid using huggingface API which costs money
 # model = SentenceTransformer('sentence-transformers/msmarco-MiniLM-L12-cos-v5')
-model = INSTRUCTOR('hkunlp/instructor-xl')
-instruction = "Represent the news articles about police-involved fatal shooting for question answering:"
+model = INSTRUCTOR('hkunlp/instructor-large')
+instruction = "Represent the news articles for question answering:"
 
 print("Max Sequence Length:", model.max_seq_length)
 model.max_seq_length = 512
@@ -192,10 +192,14 @@ query_text = """
 Breaking news coverage on recent police shooting incidents leading to fatalities of the victims. The incidents are about police officer, deputy, sheriff, trooper, cop who fired shots and killed someone.
 Do not include aggregated summary, list, or archive of incidents happened in the past. Do not include if it's about a past, not recent incident. Only include if the story mentioned the death of the victim.
 """
+# filter for US only
 instruction_prompt = "Represent the news articles for retrieval:"
 
 negative_text = "A list of, archive"
-# query_text = "Find recent hate crime incidents targeting gender or gender identity of the victims."
+# query_text = """
+# Breaking news coverage on recent hate crime incidents. The incidents can be reported as a generic hate crime incident, but the motive is likely gender-identity related. The victims are targeted because of their gender identities.
+# Do not include aggregated summary, list, or archive of incidents happened in the past. Do not include if it's about a past, not recent incident. Only include if the story if the hate crime is potentially targeting the gender identity of the victim.
+# """
 
 # query_vector = model.encode(query_text).tolist()
 # negative_vector = model.encode(negative_text).tolist()
