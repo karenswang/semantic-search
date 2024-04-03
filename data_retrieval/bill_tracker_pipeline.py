@@ -29,43 +29,46 @@ client = weaviate.Client(
 
 
 state = "NY"
-# Configuration for API requests
-api_url = "https://www.billtrack50.com/bt50api/2.1/json/bills"
-params = {
-    "searchText": "gender",
-    "stateCodes": state
-}
-headers = {
-    "Authorization": f"apiKey {billtrack50_api_key}"
-}
+# # Configuration for API requests
+# api_url = "https://www.billtrack50.com/bt50api/2.1/json/bills"
+# params = {
+#     "searchText": "gender",
+#     "stateCodes": state
+# }
+# headers = {
+#     "Authorization": f"apiKey {billtrack50_api_key}"
+# }
 
-# Initialize DataFrame to store combined data
-combined_results = pd.DataFrame()
+# # Initialize DataFrame to store combined data
+# combined_results = pd.DataFrame()
 
-# Implement pagination
-current_page = 1
-total_pages = None  # We'll update this based on the API responses
+# # Implement pagination
+# current_page = 1
+# total_pages = None  # We'll update this based on the API responses
 
-while total_pages is None or current_page <= total_pages:
-    print(f"Fetching data for page {current_page}...")
-    response = requests.get(api_url, headers=headers, params={**params, "page": current_page})
-    if response.status_code == 200:
-        data = response.json()
-        if total_pages is None:
-            # Assuming the API provides total pages directly
-            total_pages = data.get('totalPages', 1)
-        bills = data['bills']
-        combined_results = pd.concat([combined_results, pd.DataFrame(bills)], ignore_index=True)
-        current_page += 1
-    else:
-        print(f"Failed to fetch data for page {current_page}. Status Code: {response.status_code}")
-        break
+# while total_pages is None or current_page <= total_pages:
+#     print(f"Fetching data for page {current_page}...")
+#     response = requests.get(api_url, headers=headers, params={**params, "page": current_page})
+#     if response.status_code == 200:
+#         data = response.json()
+#         if total_pages is None:
+#             # Assuming the API provides total pages directly
+#             total_pages = data.get('totalPages', 1)
+#         bills = data['bills']
+#         combined_results = pd.concat([combined_results, pd.DataFrame(bills)], ignore_index=True)
+#         current_page += 1
+#     else:
+#         print(f"Failed to fetch data for page {current_page}. Status Code: {response.status_code}")
+#         break
 
-print("Shape of result dataframe:", combined_results.shape)
-print(combined_results.head())
-combined_results.to_csv(f'./data_storage/legislation/{state}_billtrack50_results.csv', index=False)
-# combined_results = pd.read_csv('./data_storage/legislation/billtrack50_results.csv')
+# print("Shape of result dataframe:", combined_results.shape)
+# print(combined_results.head())
+# combined_results.to_csv(f'./data_storage/legislation/{state}_billtrack50_results.csv', index=False)
+combined_results = pd.read_csv(f'./data_storage/legislation/{state}_billtrack50_results.csv')
 
+
+
+#------------------ vectorization ------------------
 # pre-vectorize the snippet to avoid using huggingface API which costs money
 model = SentenceTransformer('sentence-transformers/msmarco-MiniLM-L12-cos-v5')
 # model = INSTRUCTOR('hkunlp/instructor-large')
@@ -131,16 +134,17 @@ with client.batch as batch:
             "created": row['created']   
         }
         # concatenated_vector = row['billName_vector'] + row['summary_vector'] + row['keyWords_vector']
-        vector = row['summary_vector']
 
         # Adjust the property names and structure according to your schema requirements
-        batch.add_data_object(properties, "Legislation", vector=vector)
+        batch.add_data_object(properties, "Legislation", vector=row['summary_vector'])
 
 
 query_text = """
 Find bills relating to gender identity, LGBTQ+ groups, trans, nonbinary, gender-nonconforming, genderqueer, genderfluid. Also include bills that could have a bigger impact on these groups than others.
+This could include but not limited to topics on : Sex reassignment, gender reassignment, Biological sex, Natural sex hormones, Sex organs etc.
+
 """
-instruction_prompt = "Represent the news articles for retrieval:"
+instruction_prompt = "Represent the legislation bill for retrieval:"
 
 negative_text = "A list of, archive"
 # query_text = "Find recent hate crime incidents targeting gender or gender identity of the victims."
