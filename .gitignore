@@ -8,3 +8,6 @@ article_cache
 *.csv
 *.xlsx
 legacy_mediacloud.ipynb
+data_retrieval/local_news_pipeline.py
+data_retrieval/local_news.ipynb
+*.txt
