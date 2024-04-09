@@ -10,3 +10,5 @@ article_cache
 legacy_mediacloud.ipynb
 *.mov
 *.txt
+data_retrieval/local_news_pipeline.py
+data_retrieval/local_news.ipynb
