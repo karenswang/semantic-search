@@ -136,7 +136,7 @@ openai_client = OpenAI()
 
 # # ----------------- Vectorize the snippets -----------------
 # # use this line and uncomment above if importing existing web search results
-# combined_results = pd.read_csv('./data_storage/web_search_results_benchmark.csv')
+# combined_results = pd.read_csv('./data_storage/benchmark/web_search_results_benchmark.csv')
 
 # # pre-vectorize the snippet to avoid using huggingface API which costs money
 # # embed_model = SentenceTransformer('sentence-transformers/msmarco-MiniLM-L12-cos-v5')
