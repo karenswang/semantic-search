@@ -11,4 +11,4 @@ legacy_mediacloud.ipynb
 data_retrieval/local_news_pipeline.py
 data_retrieval/local_news.ipynb
 data_processing/LLM_search.ipynb
-data_storage/*
+data_storage
