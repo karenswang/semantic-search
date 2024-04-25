@@ -1,19 +1,14 @@
 .env
 .DS_Store
 
-semantic-search-1697418273136-1630a5c96bc7.json
 *.pyc
 *.sqlite
 article_cache
+*.txt
 *.csv
 *.xlsx
 legacy_mediacloud.ipynb
 data_retrieval/local_news_pipeline.py
 data_retrieval/local_news.ipynb
-*.txt
-*.csv
-*.xlsx
-legacy_mediacloud.ipynb
-*.txt
-*.mov
+data_processing/LLM_search.ipynb
 data_storage/*

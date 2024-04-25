@@ -205,6 +205,7 @@ Do not include aggregated summary, list, or archive of incidents happened in the
 Do not include if it's coverage on new evidence or recent legal proceedings, court cases, or trials of a past incident. Do not include if it's about the aftermath of the incident, such as protests, rallies, or demonstrations on a past incident.
 Do not include if it happened in a foreign country, only include if it's about the United States. 
 """
+# filter for US only
 instruction_prompt = "Represent the news articles for retrieval:"
 
 # # Using the text-embedding-3-large model to generate embeddings
