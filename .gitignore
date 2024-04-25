@@ -8,7 +8,10 @@ article_cache
 *.csv
 *.xlsx
 legacy_mediacloud.ipynb
-data_retrieval/local_news_pipeline.py
-data_retrieval/local_news.ipynb
-data_processing/LLM_search.ipynb
+semantic_pipeline/local_news_pipeline.py
+semantic_pipeline/local_news.ipynb
+semantic_pipeline/mediacloud_data.ipynb
+semantic_pipeline/web_search.py
+semantic_pipeline/custom_search.py
+utils/LLM_search.ipynb
 data_storage
