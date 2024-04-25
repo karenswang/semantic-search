@@ -4,14 +4,11 @@
 *.pyc
 *.sqlite
 article_cache
+*.txt
 *.csv
 *.xlsx
 legacy_mediacloud.ipynb
-*.mov
-*.txt
 data_retrieval/local_news_pipeline.py
 data_retrieval/local_news.ipynb
 data_processing/LLM_search.ipynb
 data_storage/*
-*.txt
-*.mov
