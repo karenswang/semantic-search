@@ -7,13 +7,21 @@ import requests_cache
 from tqdm import tqdm
 import mediacloud.api
 from newspaper import Article
+import os
+
 # import unicodedata
 import concurrent.futures
-from utils.utils import split_into_chunks, fetch_snippet, sanitize_snippet, get_snippet_from_wayback_machine
+from utils.utils import (
+    split_into_chunks,
+    fetch_snippet,
+    sanitize_snippet,
+    get_snippet_from_wayback_machine,
+)
 
+mediacloud_api_key = os.environ["MEDIACLOUD_API_KEY"]
 # get news domains
 collection_id = "38379429"
-directory_api = mediacloud.api.DirectoryApi(auth_token='e85cce24da8b73eaa05329d258146c044ef055db')
+directory_api = mediacloud.api.DirectoryApi(auth_token=mediacloud_api_key)
 api = SearchApiClient("mediacloud")
 
 all_domains = []
@@ -24,33 +32,35 @@ more_pages = True
 
 while more_pages:
     # Fetch sources with current offset
-    sources_response = directory_api.source_list(collection_id=collection_id, limit=limit, offset=offset)
-    sources = sources_response.get('results', [])
-    domains = [source['homepage'] for source in sources]
+    sources_response = directory_api.source_list(
+        collection_id=collection_id, limit=limit, offset=offset
+    )
+    sources = sources_response.get("results", [])
+    domains = [source["homepage"] for source in sources]
     all_domains.extend(domains)
-    
+
     # Update the offset
     offset += limit
-    
+
     # Check if there are more pages to fetch
     more_pages = len(sources) == limit
 
 # Cleaning up domains
 cleaned_domains = [
-    domain.replace('https://www.', '')
-          .replace('http://www.', '')
-          .replace('https://', '')
-          .replace('http://', '')
-          .replace('#spider', '')
-          .replace('/#spider', '')
-          .rstrip('/')
+    domain.replace("https://www.", "")
+    .replace("http://www.", "")
+    .replace("https://", "")
+    .replace("http://", "")
+    .replace("#spider", "")
+    .replace("/#spider", "")
+    .rstrip("/")
     for domain in all_domains
     if domain  # Ensure the domain is not None or empty
 ]
 print(f"Number of sources: {len(cleaned_domains)}")
-domains_df = pd.DataFrame(cleaned_domains, columns=['Domain'])
+domains_df = pd.DataFrame(cleaned_domains, columns=["Domain"])
 # Save the DataFrame to a CSV file
-domains_df.to_csv('domains.csv', index=False)
+domains_df.to_csv("domains.csv", index=False)
 
 domain_chunks = list(split_into_chunks(cleaned_domains, 1000))
 
@@ -64,7 +74,7 @@ domain_chunks = list(split_into_chunks(cleaned_domains, 1000))
 # print(cleaned_domains)
 
 # Enable requests cache
-requests_cache.install_cache('article_cache', backend='filesystem', expire_after=3600)
+requests_cache.install_cache("article_cache", backend="filesystem", expire_after=3600)
 
 
 # Query parameters
@@ -73,8 +83,8 @@ query_term = '("police shooting" OR "shot by police" OR "police shot" OR "office
     "killed by police" OR "killed by officer" OR "killed by deputy" OR "killed by sheriff" OR "killed by cop" OR "killed by trooper")'
 
 # query_term = 'police AND shot'
-start = datetime(2023, 9, 1) #11/6 - 11/15
-end = datetime(2023, 10, 1) 
+start = datetime(2023, 9, 1)  # 11/6 - 11/15
+end = datetime(2023, 10, 1)
 language = "en"
 
 # DataFrame to store combined results
@@ -84,36 +94,38 @@ results_list = []
 for chunk in domain_chunks:
     domains_str = f"domain:({' OR '.join(chunk)})"
     query = f"{query_term} AND language:{language} AND {domains_str}"
-    
+
     # Perform the search with the current chunk
     articles = []
     for list_of_articles in api.all_articles(query, start, end):
         articles.extend(list_of_articles)
         print(f"Found {len(articles)} articles")
-    
+
     if articles:
         chunk_results = pd.DataFrame(articles)
         results_list.append(chunk_results)
-    
+
 
 # Concatenate all DataFrames in the list
 combined_results = pd.concat(results_list, ignore_index=True)
 # results = pd.DataFrame(articles).sort_values(by='publication_date', ascending=False)
-combined_results.sort_values(by='publication_date', ascending=False, inplace=True)
+combined_results.sort_values(by="publication_date", ascending=False, inplace=True)
 print(combined_results.shape)
-combined_results.drop_duplicates(subset=['title'], keep='first', inplace=True)
+combined_results.drop_duplicates(subset=["title"], keep="first", inplace=True)
 print("after dropping duplicates: ", combined_results.shape)
-combined_results.to_csv(f'./data_storage/{start}_no_snippet.csv', index=False)
+combined_results.to_csv(f"./data_storage/{start}_no_snippet.csv", index=False)
 
 
-for index, article in tqdm(combined_results.iterrows(), total=combined_results.shape[0]):
+for index, article in tqdm(
+    combined_results.iterrows(), total=combined_results.shape[0]
+):
     # only use wayback machine
-    wayback_url = article['article_url']
+    wayback_url = article["article_url"]
     snippet = get_snippet_from_wayback_machine(wayback_url)
     if snippet:
         sanitized_snippet = sanitize_snippet(snippet)
-        combined_results.loc[index, 'snippet'] = sanitized_snippet
-        
+        combined_results.loc[index, "snippet"] = sanitized_snippet
+
     # or concurrently run mediacloud wayback machine and newspaper3k
     # article_url = article['url']
     # wayback_url = article['article_url']
@@ -124,8 +136,7 @@ for index, article in tqdm(combined_results.iterrows(), total=combined_results.s
     #     # print(f"Snippet fetched using {method_used} method for URL: {article_url}")
 
 print(combined_results.shape)
-combined_results.dropna(subset=['snippet'], inplace=True)
+combined_results.dropna(subset=["snippet"], inplace=True)
 print("after dropping null snippets: ", combined_results.shape)
-combined_results.to_csv(f'./data_storage/{start}.csv', index=False)
+combined_results.to_csv(f"./data_storage/{start}.csv", index=False)
 print(f"Data retrieval complete. Results saved to './data_storage/{start}.csv'.")
-
